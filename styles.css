@@ -1,0 +1,8 @@
+#canvas {
+  display: inline;
+}
+
+.canvasWrapper {
+  width: 100%;
+  text-align: center;
+}
