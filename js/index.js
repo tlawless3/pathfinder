@@ -4,11 +4,13 @@ let lines = [];
 let currentPoint = {
   x: 5,
   y: 5,
-  dist: 0
+  dist: 0,
+  visited: false,
+  parent: null,
 }
 let endPoint = {
-  x: 790,
-  y: 590
+  x: 90,
+  y: 90
 }
 
 let canvas = document.getElementById('canvas')
@@ -111,25 +113,29 @@ const pathFind = (start) => {
     let neighboringNodesArr = [{
       x: baseNode.x + 5,
       y: baseNode.y,
-      dist: baseNode.dist + 1
+      dist: baseNode.dist + 1,
+      parent: baseNode
     }, {
       x: baseNode.x - 5,
       y: baseNode.y,
-      dist: baseNode.dist + 1
+      dist: baseNode.dist + 1,
+      parent: baseNode
     }, {
       x: baseNode.x,
       y: baseNode.y + 5,
-      dist: baseNode.dist + 1
+      dist: baseNode.dist + 1,
+      parent: baseNode
     }, {
       x: baseNode.x + 5,
       y: baseNode.y - 5,
-      dist: baseNode.dist + 1
+      dist: baseNode.dist + 1,
+      parent: baseNode
     }]
 
     let resultArr = []
 
     neighboringNodesArr.map(node => {
-      if (checkForOutOfBounds(node) && checkClosedNode(node) && !checkCollision(node)) {
+      if (checkForOutOfBounds(node) && !checkClosedNode(node) && !checkCollision(node)) {
         resultArr.push(node)
       }
     })
@@ -162,8 +168,11 @@ const pathFind = (start) => {
   //checks node against array of visited nodes returns true if node has been visited
   const checkClosedNode = (node) => {
     for (let i = 0; i < closedNodes.length; i++) {
-      if (closedNodes[i].x === node.x && closedNodes[i].y === node.y) {
+      if (closedNodes[i].x === node.x && closedNodes[i].y === node.y && closedNodes[i].dist <= node.dist) {
         return true
+      } else if (closedNodes[i].x === node.x && closedNodes[i].y === node.y && closedNodes[i].dist > node.dist) {
+        closedNodes[i] = node
+        return false
       }
     }
     closedNodes.push(node)
@@ -173,16 +182,12 @@ const pathFind = (start) => {
   let grid = []
 
   initGrid = () => {
-    let xCoord = 0
-    let yCoord = 0
-
-    for (let i = 0; i < canvas.width; i += 5) {
-      xCoord++
-      for (let j = 0; j < canvas.height; j += 5) {
-        yCoord++
+    grid = []
+    for (let i = 0; i < canvas.width; i++) {
+      for (let j = 0; j < canvas.height; j++) {
         grid.push({
-          x: xCoord,
-          y: yCoord,
+          x: i,
+          y: j,
           dist: undefined,
           parent: null,
           visited: false
@@ -192,34 +197,86 @@ const pathFind = (start) => {
   }
 
 
-  const generatePath = ((node) => {
-    initGrid()
-    currentNode = node
-    neighbors = generateNeighbors(node)
-    neighbors.map(newNode => {
-      grid.map(gridNode => {
-        if (gridNode.x === newNode.x && gridNode.y === newNode.y) {
+  const generatePath = ((startNode) => {
+    let availabileTiles = []
 
-        }
+    const generateGrid = (gridNode) => {
+      let neighbors = generateNeighbors(gridNode)
+      if (neighbors.length >= 1) {
+        console.log(neighbors)
+        neighbors.map(neighbor => {
+          neighbor.parent = gridNode
+          availabileTiles.push(neighbor)
+          generateGrid(neighbor)
+        })
+      }
+      availabileTiles.sort((tile, newTile) => {
+        return tile.dist - newTile.dist
       })
-      foundNode.parent = node
+    }
+    availabileTiles.forEach(node => {
+      if (checkForEnd(node) && closedNodes.length) {
+        console.log('end found')
+        console.log('final node', node)
+        let resultArr = []
+        while (node.parent) {
+          resultArr.push(node)
+          node = node.parent
+        }
+        console.log(resultArr)
+        return resultArr
+      }
     })
+
+    return generateGrid(startNode)
+    // const gridSurvey = (node) => {
+    //   if (checkForEnd(node) && closedNodes.length) {
+    //     console.log('end found')
+    //     console.log('final node', node)
+    //     let resultArr = []
+    //     while (node.parent) {
+    //       resultArr.push(node)
+    //       node = node.parent
+    //     }
+    //     console.log(resultArr)
+    //     return resultArr
+    //   }
+    // let neighbors = generateNeighbors(node)
+    // neighbors.map(neighbor => {
+    //   neighbor.parent = node
+    //   availabileTiles.push(neighbor)
+    // })
+    // neighbors.map(newNode => {
+    //   grid.map(gridNode => {
+    //     if (gridNode.x === newNode.x && gridNode.y === newNode.y) {
+    //       if (!gridNode.visited) {
+    //         gridNode.visited = true
+    //         gridNode.dist = newNode.dist
+    //         gridNode.parent = node
+    //       }
+    //     }
+    //   })
+    //   gridSurvey(newNode)
+    // })
+    // }
   })
 
-  const moveRectOnPath = (path) => {
+  const moveRectOnPath = ((path) => {
     count = 0;
+    console.log(path)
     path.map(point => {
       count += 500
       setTimeout(redrawFrame(point), count)
     })
-  }
+  })
 
   if (!started) {
     drawMovingRect(currentPoint)
     drawEndRect(endPoint)
   } else {
-    console.log(generatePath(currentPoint))
-    moveRectOnPath(generatePath(currentPoint))
+    let path = generatePath(currentPoint)
+    console.log(path)
+    moveRectOnPath(path)
   }
 }
 
