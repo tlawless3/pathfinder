@@ -7,8 +7,8 @@ let currentPoint = {
   dist: 0
 }
 let endPoint = {
-  x: 20,
-  y: 20
+  x: 790,
+  y: 590
 }
 
 let canvas = document.getElementById('canvas')
@@ -129,7 +129,7 @@ const pathFind = (start) => {
     let resultArr = []
 
     neighboringNodesArr.map(node => {
-      if (checkForOutOfBounds(node) && !checkClosedNode(node) && checkCollision(node)) {
+      if (checkForOutOfBounds(node) && checkClosedNode(node) && !checkCollision(node)) {
         resultArr.push(node)
       }
     })
@@ -146,12 +146,12 @@ const pathFind = (start) => {
 
   //returns true if node collides with line (within 5 px) and walls based on canvas width and height
   const checkCollision = (node) => {
-    let collide = true
+    let collide = false
     lines.map(lineCoords => {
       const dist = Math.sqrt(lineCoords[0][0] * lineCoords[1][0] + lineCoords[0][1] * lineCoords[1][1])
       const nodeDist = Math.sqrt(lineCoords[0][0] * node.x + lineCoords[0][1] * node.y)
       if ((nodeDist >= dist + 5 && nodeDist <= dist - 5) && (node.x >= 0 && node.x <= canvas.width) && (node.y >= 0 && node.y <= canvas.height)) {
-        collide = false;
+        collide = true;
       }
     })
     return collide
@@ -162,7 +162,7 @@ const pathFind = (start) => {
   //checks node against array of visited nodes returns true if node has been visited
   const checkClosedNode = (node) => {
     for (let i = 0; i < closedNodes.length; i++) {
-      if (closedNodes[i].x === node.x && closedNodes[i].y === node.y && closedNodes[i].dist < node.dist) {
+      if (closedNodes[i].x === node.x && closedNodes[i].y === node.y) {
         return true
       }
     }
@@ -170,19 +170,40 @@ const pathFind = (start) => {
     return false
   }
 
-  const generatePath = ((node, iterativeArr) => {
-    let resultArr = iterativeArr ? iterativeArr : []
-    const neighboringNodes = generateNeighbors(node)
-    for (let i = 0; i < neighboringNodes.length; i++) {
-      let newNode = neighboringNodes[i]
-      if (checkForEnd(newNode)) {
-        resultArr.push(newNode)
-        return resultArr.reverse()
-      } else if (checkCollision(newNode)) {
-        resultArr.push(newNode)
-        return generatePath(newNode, resultArr)
+  let grid = []
+
+  initGrid = () => {
+    let xCoord = 0
+    let yCoord = 0
+
+    for (let i = 0; i < canvas.width; i += 5) {
+      xCoord++
+      for (let j = 0; j < canvas.height; j += 5) {
+        yCoord++
+        grid.push({
+          x: xCoord,
+          y: yCoord,
+          dist: undefined,
+          parent: null,
+          visited: false
+        })
       }
     }
+  }
+
+
+  const generatePath = ((node) => {
+    initGrid()
+    currentNode = node
+    neighbors = generateNeighbors(node)
+    neighbors.map(newNode => {
+      grid.map(gridNode => {
+        if (gridNode.x === newNode.x && gridNode.y === newNode.y) {
+
+        }
+      })
+      foundNode.parent = node
+    })
   })
 
   const moveRectOnPath = (path) => {
